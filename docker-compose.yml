@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: synthetic_db
+    environment:
+      POSTGRES_DB: synthetic_data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  streamlit_app:
+    build: .
+    container_name: genai_app
+    ports:
+      - "8501:8501"
+    environment:
+      - GCP_PROJECT=gd-gcp-gridu-genai
+      - GCP_LOCATION=us-central1
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=synthetic_data
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrespassword
+      - LANGFUSE_PUBLIC_KEY=your_public_key
+      - LANGFUSE_SECRET_KEY=your_secret_key
+      - LANGFUSE_HOST=https://cloud.langfuse.com
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
