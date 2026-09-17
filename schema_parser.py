@@ -8,7 +8,6 @@ from google import genai
 from google.genai import types
 from langfuse.decorators import observe, langfuse_context
 
-# Force path resolution inside Docker
 sys.path.append(str(Path(__file__).parent.resolve()))
 load_dotenv()
 
@@ -32,7 +31,6 @@ class DatabaseSchema(BaseModel):
 
 @observe(name="parse_ddl_schema")
 def parse_ddl_with_gemini(ddl_text: str, project_id: str, location: str) -> DatabaseSchema:
-    # Authenticate via GCP Vertex AI (uses GCP Application Default Credentials)
     client = genai.Client(vertexai=True, project=project_id, location=location)
     
     langfuse_context.update_current_trace(
@@ -49,7 +47,6 @@ def parse_ddl_with_gemini(ddl_text: str, project_id: str, location: str) -> Data
     {ddl_text}
     """
     
-    # Uses gemini-1.5-flash for guaranteed Vertex AI regional availability
     response = client.models.generate_content(
         model='gemini-2.5-flash',
         contents=prompt,

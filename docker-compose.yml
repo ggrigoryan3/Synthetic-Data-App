@@ -21,10 +21,7 @@ services:
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-key.json
     volumes:
-      # Linux/Mac mount path:
       - ~/.config/gcloud/application_default_credentials.json:/app/gcp-key.json:ro
-      # If on Windows PowerShell, uncomment the line below and comment the line above:
-      # - ${APPDATA}/gcloud/application_default_credentials.json:/app/gcp-key.json:ro
     depends_on:
       - postgres
 

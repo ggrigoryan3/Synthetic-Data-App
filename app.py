@@ -3,10 +3,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Ensure local modules (schema_parser, data_generator) are resolved inside Docker
 sys.path.append(str(Path(__file__).parent.resolve()))
 
-# Load environment variables FIRST
 load_dotenv()
 
 import streamlit as st
@@ -17,26 +15,21 @@ from data_generator import DataGenerationEngine, export_to_zip
 
 st.set_page_config(page_title="Synthetic Data Platform", layout="wide")
 
-# Single-source setup for GCP parameters
 GCP_PROJECT = os.getenv("GCP_PROJECT")
 GCP_LOCATION = os.getenv("GCP_LOCATION", "us-central1")
 
-# Guard clause to prevent execution with invalid/missing GCP parameters
 if not GCP_PROJECT or GCP_PROJECT == "your-gcp-project":
     st.error("Error: GCP_PROJECT is missing or improperly configured in your `.env` file!")
     st.stop()
 
-# Persistent State Management
 if "generated_tables" not in st.session_state:
     st.session_state.generated_tables = {}
 if "parsed_schema" not in st.session_state:
     st.session_state.parsed_schema = None
 
-# Sidebar Navigation
 st.sidebar.title("Navigation")
 app_mode = st.sidebar.radio("Go to", ["Data Generation", "Talk to your data"])
 
-# Database Helper Function
 def save_tables_to_postgres(tables_dict):
     conn = psycopg2.connect(
         host=os.getenv("POSTGRES_HOST", "localhost"),
@@ -46,10 +39,8 @@ def save_tables_to_postgres(tables_dict):
     )
     cursor = conn.cursor()
     for table_name, df in tables_dict.items():
-        # Clean insert strategy
         cursor.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE;")
         
-        # Build text CREATE query based on DataFrame schema
         cols = ", ".join([f'"{col}" TEXT' for col in df.columns])
         cursor.execute(f'CREATE TABLE {table_name} ({cols});')
         
@@ -86,7 +77,6 @@ if app_mode == "Data Generation":
 
             engine = DataGenerationEngine(GCP_PROJECT, GCP_LOCATION)
             
-            # Sort tables by topological dependency
             sorted_tables = sorted(schema.tables, key=lambda x: x.dependency_order)
             
             generated_data = {}
@@ -107,7 +97,6 @@ if app_mode == "Data Generation":
             st.session_state.generated_tables = generated_data
             st.success("Synthetic Data Generation Complete!")
 
-    # Display generated tables & modification controls
     if st.session_state.generated_tables:
         st.divider()
         st.subheader("Data Inspector & Refinement Module")
@@ -121,7 +110,6 @@ if app_mode == "Data Generation":
                 df_curr = st.session_state.generated_tables[tab_name]
                 st.dataframe(df_curr, use_container_width=True)
 
-                # Table modifications block
                 with st.form(key=f"mod_form_{tab_name}"):
                     mod_prompt = st.text_input(f"Enter feedback to adjust table '{tab_name}'", 
                                               placeholder="e.g., Multiply all prices by 1.15, make status column uppercase...")
@@ -137,7 +125,6 @@ if app_mode == "Data Generation":
         c1, c2 = st.columns([1, 1])
 
         with c1:
-            # Export to ZIP
             zip_bytes = export_to_zip(st.session_state.generated_tables)
             st.download_button(
                 label="Download Generated Dataset (.zip)",
@@ -148,7 +135,6 @@ if app_mode == "Data Generation":
             )
 
         with c2:
-            # Commit to PostgreSQL
             if st.button("Save to System Database", use_container_width=True):
                 try:
                     save_tables_to_postgres(st.session_state.generated_tables)

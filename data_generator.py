@@ -14,7 +14,6 @@ from langfuse.decorators import observe, langfuse_context
 sys.path.append(str(Path(__file__).parent.resolve()))
 load_dotenv()
 
-# Initialize Langfuse
 langfuse_client = Langfuse(
     public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
     secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
@@ -23,7 +22,6 @@ langfuse_client = Langfuse(
 
 class DataGenerationEngine:
     def __init__(self, project_id: str, location: str):
-        # Authenticate via GCP Vertex AI
         self.client = genai.Client(vertexai=True, project=project_id, location=location)
 
     @observe(name="generate_table_data")
